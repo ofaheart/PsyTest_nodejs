@@ -3,7 +3,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const {Datastore} = require('@google-cloud/datastore');
-const sessionStorage = require('sessionstorage-for-nodejs');
+// const sessionStorage = require('sessionstorage-for-nodejs');
 
 const app = express();
 app.enable('trust proxy');
@@ -24,21 +24,21 @@ app.get('/', (req, res) => {
 });
 
 // Insert info
-const insertInfo = info => {
-  return datastore.save({
-    key: datastore.key('info'),
-    data: info,
-  });
-};
+// const insertInfo = info => {
+//   return datastore.save({
+//     key: datastore.key('info'),
+//     data: info,
+//   });
+// };
 
-console.log("test");
+// console.log("test");
 
-// 接post過來的資料
-app.post('/', function(req, res) {
-  console.log("test");
-  console.log(req.body.gender);
-  res.send("Data received");
-});
+// // 接post過來的資料
+// app.post('/', function(req, res) {
+//   console.log("test");
+//   console.log(req.body.gender);
+//   res.send("Data received");
+// });
 
 
 // Start the server

@@ -1,13 +1,3 @@
-const homeContainer = document.getElementById("home-container");
-const preTestContainer = document.getElementById("pre-test-container");
-const questionContainer = document.getElementById("question-container");
-const resultContainer = document.getElementById("result-container");
-const recommendationEle = document.getElementById("recommendation");
-const resultImg = document.getElementById("result-img");
-const choicesElement = document.getElementById("choices");
-const questionNum = document.querySelector("#question span");
-const questionContent = document.querySelector("#question p");
-
 // Model
 var model = {
   currentQuestion: 0,
@@ -99,7 +89,13 @@ var model = {
       img: "https://i.imgur.com/oTJ5fhQ.png"
     }
     // 更多結果...
-  ]
+  ],
+  setInfo: function (info) {
+    sessionStorage.setItem("info", JSON.stringify(info));
+  },
+  setMyScores: function (scores) {
+    sessionStorage.setItem("myScores", JSON.stringify(scores));
+  }
 };
 
 // View
@@ -116,8 +112,7 @@ var view = {
     this.toggleContainer(preTestContainer, false);
     this.toggleContainer(questionContainer, false);
     this.toggleContainer(resultContainer, false);
-    sessionStorage.clear();
-    controller.clearData;
+    controller.clearData();
   },
 
   displayPreTest: function () {
@@ -125,25 +120,6 @@ var view = {
     this.toggleContainer(preTestContainer, true);
     this.toggleContainer(questionContainer, false);
     this.toggleContainer(resultContainer, false);
-  }, // 處理資料的函式
-  handleFormData: function (event) {
-    event.preventDefault();
-
-    var name = document.getElementById("name").value;
-    var gender = document.getElementById("gender").value;
-    var age = document.getElementById("age").value;
-    var phone = document.getElementById("phone").value;
-    var email = document.getElementById("email").value;
-
-    model.info = {
-      name: name,
-      gender: gender,
-      age: age,
-      phone: phone,
-      email: email,
-      enter_ID: Date.now()
-    };
-    controller.startTest();
   },
   displayQuestion: function () {
     questionNum.textContent = `問題 ${model.currentQuestion + 1}:`;
@@ -173,30 +149,6 @@ var view = {
     this.toggleContainer(questionContainer, true);
     this.toggleContainer(resultContainer, false);
   },
-
-  displayResult: function () {
-    this.toggleContainer(homeContainer, false);
-    this.toggleContainer(preTestContainer, false);
-    this.toggleContainer(questionContainer, false);
-    this.toggleContainer(resultContainer, true);
-
-    var score = 0;
-
-    model.answers.forEach(function (answer, index) {
-      score += model.questions[index].scores[answer];
-    });
-
-    // 將結果存入 model.myScores
-    model.myScores = score;
-    saveDataToApplication();
-    // document.getElementById("result").textContent = "勞累分數：" + score;
-    var recommendationEle = document.getElementById("recommendation");
-    var result = this.getResult(model.myScores);
-    var recommendation = result.recommendation;
-    var img = result.img;
-    recommendationEle.textContent = recommendation;
-    resultImg.setAttribute("src", img);
-  },
   getResult: function (score) {
     var result = model.results.find(function (result) {
       if (score >= result.minScore && score <= result.maxScore) {
@@ -212,6 +164,33 @@ var view = {
           recommendation: "",
           img: ""
         };
+  },
+  updateOGTags: function (image) {
+    var ogImageTag = document.querySelector('meta[property="og:image"]');
+    ogImageTag.content = image;
+  },
+  displayResult: function () {
+    this.toggleContainer(homeContainer, false);
+    this.toggleContainer(preTestContainer, false);
+    this.toggleContainer(questionContainer, false);
+    this.toggleContainer(resultContainer, true);
+
+    var score = 0;
+
+    model.answers.forEach(function (answer, index) {
+      score += model.questions[index].scores[answer];
+    });
+    // 將結果存入 model.myScores
+    model.myScores = score;
+    model.setMyScores(score);
+    // document.getElementById("result").textContent = "勞累分數：" + score;
+    resultName.textContent = `${model.info.name} 的吉戰力：`;
+    var result = this.getResult(model.myScores);
+    var recommendation = result.recommendation;
+    var img = result.img;
+    recommendationEle.textContent = recommendation;
+    resultImg.setAttribute("src", img);
+    this.updateOGTags(img);
   }
 };
 
@@ -229,7 +208,26 @@ var controller = {
     document.getElementById("phone").value = "";
     document.getElementById("email").value = "";
     sessionStorage.removeItem("info");
-    sessionStorage.removeItem("answers");
+    sessionStorage.removeItem("myScores");
+  },
+  handleFormData: function (event) {
+    event.preventDefault();
+
+    var name = document.getElementById("name").value;
+    var gender = document.getElementById("gender").value;
+    var age = document.getElementById("age").value;
+    var phone = document.getElementById("phone").value;
+    var email = document.getElementById("email").value;
+
+    model.info = {
+      name: name,
+      gender: gender,
+      age: age,
+      phone: phone,
+      email: email
+    };
+    model.setInfo(model.info);
+    this.startTest();
   },
   preTest: function () {
     view.displayPreTest();
@@ -254,25 +252,17 @@ var controller = {
     view.displayHome();
   }
 };
-// 將 model.info 和 model.results 儲存至 Application
-function saveDataToApplication() {
-  sessionStorage.setItem("info", JSON.stringify(model.info));
-  sessionStorage.setItem("myScores", JSON.stringify(model.myScores));
-}
 
-// 從 Application 讀取儲存的資料至 model.info 和 model.myScores
-function loadDataFromApplication() {
-  var infoData = sessionStorage.getItem("info");
-  var myScoresData = sessionStorage.getItem("myScores");
-
-  if (infoData) {
-    model.info = JSON.parse(infoData);
-  }
-
-  if (myScoresData) {
-    model.myScores = JSON.parse(myScoresData);
-  }
-}
+const homeContainer = document.getElementById("home-container");
+const preTestContainer = document.getElementById("pre-test-container");
+const questionContainer = document.getElementById("question-container");
+const resultContainer = document.getElementById("result-container");
+const resultName = document.getElementById("result-name");
+const recommendationEle = document.getElementById("recommendation");
+const resultImg = document.getElementById("result-img");
+const choicesElement = document.getElementById("choices");
+const questionNum = document.querySelector("#question span");
+const questionContent = document.querySelector("#question p");
 
 // 監聽開始測驗按鈕
 document.getElementById("start-button").addEventListener("click", function () {
@@ -283,7 +273,7 @@ document.getElementById("start-button").addEventListener("click", function () {
 document
   .getElementById("pre-test-form")
   .addEventListener("submit", function (e) {
-    view.handleFormData(e);
+    controller.handleFormData(e);
   });
 
 // 監聽重新測驗按鈕
@@ -292,7 +282,5 @@ document
   .addEventListener("click", function () {
     controller.restart();
   });
-
 // 啟動測驗，顯示首頁
-loadDataFromApplication();
 view.displayHome();
